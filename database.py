@@ -143,3 +143,53 @@ def get_maintenance_by_vehicle(vehiculo_id):
     conn.close()
 
     return maintenances
+
+def get_total_vehicles():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM vehiculos")
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+
+    return total
+
+
+def get_total_maintenances():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM mantenimientos")
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+
+    return total
+
+
+def get_last_maintenances(limit=5):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.marca,
+            v.modelo,
+            m.tipo_mantenimiento,
+            m.fecha,
+            m.kilometraje
+        FROM mantenimientos m
+        INNER JOIN vehiculos v
+            ON m.vehiculo_id = v.id
+        ORDER BY m.fecha DESC
+        LIMIT ?
+    """, (limit,))
+
+    maintenances = cursor.fetchall()
+
+    conn.close()
+
+    return maintenances

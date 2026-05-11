@@ -7,7 +7,10 @@ from database import (
     add_vehicle,
     get_vehicles,
     add_maintenance,
-    get_maintenance_by_vehicle
+    get_maintenance_by_vehicle,
+    get_total_vehicles,
+    get_total_maintenances,
+    get_last_maintenances
 )
 
 
@@ -28,10 +31,76 @@ st.write(t["app_description"])
 st.sidebar.title(t["menu"])
 section = st.sidebar.radio(
     "Sección" if language == "es" else "Section",
-    ["Vehículos", "Mantenimientos", "Reportes"]
+    [
+    "Dashboard",
+    "Vehículos",
+    "Mantenimientos",
+    "Reportes"
+]
 )
 
-if section == "Vehículos":
+if section == "Dashboard":
+
+    st.header(
+        "Dashboard"
+        if language == "es"
+        else "Dashboard"
+    )
+
+    total_vehicles = get_total_vehicles()
+    total_maintenances = get_total_maintenances()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "Vehículos registrados"
+            if language == "es"
+            else "Registered vehicles",
+            total_vehicles
+        )
+
+    with col2:
+        st.metric(
+            "Mantenimientos registrados"
+            if language == "es"
+            else "Registered maintenances",
+            total_maintenances
+        )
+
+    st.subheader(
+        "Últimos mantenimientos"
+        if language == "es"
+        else "Latest maintenances"
+    )
+
+    latest_maintenances = get_last_maintenances()
+
+    if latest_maintenances:
+
+        df_latest = pd.DataFrame(
+            latest_maintenances,
+            columns=[
+                "Marca",
+                "Modelo",
+                "Tipo",
+                "Fecha",
+                "Kilometraje"
+            ]
+        )
+
+        st.dataframe(df_latest, use_container_width=True)
+
+    else:
+
+        st.info(
+            "Todavía no hay mantenimientos registrados."
+            if language == "es"
+            else "No maintenances registered yet."
+        )
+    
+
+elif section == "Vehículos":
     st.header("Vehículos" if language == "es" else "Vehicles")
 
     with st.form("vehicle_form"):
