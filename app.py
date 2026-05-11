@@ -52,27 +52,54 @@ if section == "Vehículos":
             "Guardar vehículo" if language == "es" else "Save vehicle"
         )
 
-        if submitted:
-            if marca and modelo and anio and tipo:
-                add_vehicle(
-                    marca,
-                    modelo,
-                    anio,
-                    tipo,
-                    patente,
-                    kilometraje_actual
-                )
-                st.success(
-                    "Vehículo guardado correctamente."
-                    if language == "es"
-                    else "Vehicle saved successfully."
-                )
-            else:
-                st.error(
-                    "Completá los campos obligatorios."
-                    if language == "es"
-                    else "Please complete the required fields."
-                )
+    if submitted:
+
+        marca = marca.strip()
+        modelo = modelo.strip()
+        patente = patente.strip()
+
+        errores = []
+
+        if not marca:
+            errores.append(
+                "La marca es obligatoria."
+                if language == "es"
+                else "Brand is required."
+            )
+
+        if not modelo:
+            errores.append(
+                "El modelo es obligatorio."
+                if language == "es"
+                else "Model is required."
+            )
+
+        if kilometraje_actual < 1:
+            errores.append(
+                "El kilometraje debe ser mayor a 0."
+                if language == "es"
+                else "Mileage must be greater than 0."
+            )
+
+        if errores:
+            for error in errores:
+                st.error(error)
+
+        else:
+            add_vehicle(
+                marca,
+                modelo,
+                anio,
+                tipo,
+                patente,
+                kilometraje_actual
+            )
+
+            st.success(
+                "Vehículo guardado correctamente."
+                if language == "es"
+                else "Vehicle saved successfully."
+            )
 
     st.subheader("Vehículos registrados" if language == "es" else "Registered vehicles")
 
