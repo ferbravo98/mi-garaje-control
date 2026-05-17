@@ -87,6 +87,40 @@ def get_vehicles():
 
     return vehicles
 
+
+def update_vehicle(id, marca, modelo, anio, tipo, patente, kilometraje_actual):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE vehiculos
+        SET
+            marca = ?,
+            modelo = ?,
+            anio = ?,
+            tipo = ?,
+            patente = ?,
+            kilometraje_actual = ?
+        WHERE id = ?
+    """, (marca, modelo, anio, tipo, patente, kilometraje_actual, id))
+
+    conn.commit()
+    conn.close()
+
+
+def delete_vehicle(id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Eliminación física simple. En una versión futura convendría
+    # eliminación lógica (p. ej. campo activo) para conservar historial.
+    cursor.execute("DELETE FROM mantenimientos WHERE vehiculo_id = ?", (id,))
+    cursor.execute("DELETE FROM vehiculos WHERE id = ?", (id,))
+
+    conn.commit()
+    conn.close()
+
+
 def add_maintenance(
     vehiculo_id,
     fecha,
