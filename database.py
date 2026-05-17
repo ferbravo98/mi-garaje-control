@@ -170,21 +170,34 @@ def get_total_maintenances():
     return total
 
 
-def get_last_maintenances(limit=5):
+def get_total_maintenance_cost():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COALESCE(SUM(costo), 0) FROM mantenimientos")
+
+    total = cursor.fetchone()[0]
+
+    conn.close()
+
+    return total
+
+
+def get_last_maintenances(limit=10):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT
-            v.marca,
-            v.modelo,
+            v.marca || ' ' || v.modelo AS vehiculo,
             m.tipo_mantenimiento,
             m.fecha,
-            m.kilometraje
+            m.kilometraje,
+            m.costo
         FROM mantenimientos m
         INNER JOIN vehiculos v
             ON m.vehiculo_id = v.id
-        ORDER BY m.fecha DESC
+        ORDER BY m.fecha DESC, m.id DESC
         LIMIT ?
     """, (limit,))
 
@@ -193,3 +206,57 @@ def get_last_maintenances(limit=5):
     conn.close()
 
     return maintenances
+
+
+OIL_CHANGE_INTERVAL_KM = 5000
+OIL_CHANGE_TYPE = "Cambio de aceite"
+
+
+def get_oil_change_alerts():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.marca,
+            v.modelo,
+            v.patente,
+            v.kilometraje_actual,
+            (
+                SELECT m.kilometraje
+                FROM mantenimientos m
+                WHERE m.vehiculo_id = v.id
+                  AND m.tipo_mantenimiento = ?
+                ORDER BY m.fecha DESC, m.id DESC
+                LIMIT 1
+            ) AS ultimo_aceite_km
+        FROM vehiculos v
+        ORDER BY v.marca, v.modelo
+    """, (OIL_CHANGE_TYPE,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    alerts = []
+    for vehicle_id, marca, modelo, patente, km_actual, ultimo_aceite_km in rows:
+        if ultimo_aceite_km is None:
+            continue
+
+        proximo_km = ultimo_aceite_km + OIL_CHANGE_INTERVAL_KM
+        km_restantes = proximo_km - km_actual
+
+        if patente:
+            vehiculo = f"{marca} {modelo} ({patente})"
+        else:
+            vehiculo = f"{marca} {modelo}"
+
+        alerts.append({
+            "vehiculo": vehiculo,
+            "km_actual": km_actual,
+            "ultimo_aceite_km": ultimo_aceite_km,
+            "proximo_km": proximo_km,
+            "km_restantes": km_restantes,
+        })
+
+    return alerts
