@@ -312,3 +312,60 @@ def get_costs_by_vehicle():
     results = cursor.fetchall()
     conn.close()
     return results
+
+def get_maintenance_count_by_type():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            tipo_mantenimiento,
+            COUNT(*) as cantidad
+        FROM mantenimientos
+        GROUP BY tipo_mantenimiento
+        ORDER BY cantidad DESC
+    """)
+
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
+
+def get_monthly_maintenance_costs():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            substr(fecha, 1, 7) as mes,
+            SUM(costo) as total
+        FROM mantenimientos
+        GROUP BY mes
+        ORDER BY mes ASC
+    """)
+
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
+
+def get_costs_by_maintenance_type():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            tipo_mantenimiento,
+            SUM(costo) as total
+        FROM mantenimientos
+        GROUP BY tipo_mantenimiento
+        ORDER BY total DESC
+    """)
+
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return results
