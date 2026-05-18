@@ -9,6 +9,9 @@ from database import (
     get_last_maintenances,
     get_oil_change_alerts,
     get_costs_by_vehicle,
+    get_maintenance_count_by_type,
+    get_monthly_maintenance_costs,
+    get_costs_by_maintenance_type,
 )
 
 def render_metric_card(title, value, icon):
@@ -169,6 +172,96 @@ def render_dashboard(language):
         if language == "es"
         else "Accumulated costs by vehicle"
     )
+        st.subheader(
+        "Análisis visual de mantenimientos"
+        if language == "es"
+        else "Maintenance visual analysis"
+    )
+
+    col_chart1, col_chart2 = st.columns(2)
+
+    with col_chart1:
+        maintenance_by_type = get_maintenance_count_by_type()
+
+        if maintenance_by_type:
+            df_type_count = pd.DataFrame(
+                maintenance_by_type,
+                columns=[
+                    "Tipo" if language == "es" else "Type",
+                    "Cantidad" if language == "es" else "Quantity",
+                ],
+            )
+
+            fig_type_count = px.bar(
+                df_type_count,
+                x="Tipo" if language == "es" else "Type",
+                y="Cantidad" if language == "es" else "Quantity",
+                title=(
+                    "Cantidad por tipo de mantenimiento"
+                    if language == "es"
+                    else "Quantity by maintenance type"
+                ),
+                text="Cantidad" if language == "es" else "Quantity",
+            )
+
+            st.plotly_chart(fig_type_count, use_container_width=True)
+
+    with col_chart2:
+        costs_by_type = get_costs_by_maintenance_type()
+
+        if costs_by_type:
+            df_costs_type = pd.DataFrame(
+                costs_by_type,
+                columns=[
+                    "Tipo" if language == "es" else "Type",
+                    "Costo total" if language == "es" else "Total cost",
+                ],
+            )
+
+            fig_costs_type = px.pie(
+                df_costs_type,
+                names="Tipo" if language == "es" else "Type",
+                values="Costo total" if language == "es" else "Total cost",
+                title=(
+                    "Distribución de costos por tipo"
+                    if language == "es"
+                    else "Cost distribution by type"
+                ),
+                hole=0.45,
+            )
+
+            st.plotly_chart(fig_costs_type, use_container_width=True)
+
+    monthly_costs = get_monthly_maintenance_costs()
+
+    if monthly_costs:
+        df_monthly = pd.DataFrame(
+            monthly_costs,
+            columns=[
+                "Mes" if language == "es" else "Month",
+                "Costo total" if language == "es" else "Total cost",
+            ],
+        )
+
+        fig_monthly = px.bar(
+            df_monthly,
+            x="Mes" if language == "es" else "Month",
+            y="Costo total" if language == "es" else "Total cost",
+            text="Costo total" if language == "es" else "Total cost",
+            title=(
+                "Evolución mensual de gastos"
+                if language == "es"
+                else "Monthly expense trend"
+            ),
+        )
+
+        fig_monthly.update_layout(
+            xaxis_title=None,
+            yaxis_title=None,
+        )
+
+        st.plotly_chart(fig_monthly, use_container_width=True)
+        
 
     costs_by_vehicle = get_costs_by_vehicle()
 
