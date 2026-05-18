@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 from database import (
     get_total_vehicles,
@@ -7,8 +8,41 @@ from database import (
     get_total_maintenance_cost,
     get_last_maintenances,
     get_oil_change_alerts,
+    get_costs_by_vehicle,
 )
 
+def render_metric_card(title, value, icon):
+    st.markdown(
+        f"""
+        <div style="
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 18px;
+            padding: 24px;
+            min-height: 150px;
+        ">
+            <div style="font-size: 28px; margin-bottom: 12px;">{icon}</div>
+            <div style="
+                color: #94a3b8;
+                font-size: 13px;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            ">
+                {title}
+            </div>
+            <div style="
+                color: #ffffff;
+                font-size: 36px;
+                font-weight: 900;
+                margin-top: 12px;
+            ">
+                {value}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def render_dashboard(language):
     st.header("Dashboard")
@@ -20,27 +54,24 @@ def render_dashboard(language):
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(
-            "Vehículos registrados"
-            if language == "es"
-            else "Registered vehicles",
+        render_metric_card(
+            "Vehículos" if language == "es" else "Vehicles",
             total_vehicles,
+            "🚗",
         )
 
     with col2:
-        st.metric(
-            "Mantenimientos registrados"
-            if language == "es"
-            else "Registered maintenances",
+        render_metric_card(
+            "Mantenimientos" if language == "es" else "Maintenances",
             total_maintenances,
+            "🔧",
         )
 
     with col3:
-        st.metric(
-            "Costo total acumulado"
-            if language == "es"
-            else "Total accumulated cost",
+        render_metric_card(
+            "Costo total" if language == "es" else "Total cost",
             f"${total_cost:,.2f}",
+            "💰",
         )
 
     st.subheader(
@@ -132,4 +163,47 @@ def render_dashboard(language):
             "No hay vehículos con cambio de aceite registrado."
             if language == "es"
             else "No vehicles with a registered oil change."
+        )
+        st.subheader(
+        "Costos acumulados por vehículo"
+        if language == "es"
+        else "Accumulated costs by vehicle"
+    )
+
+    costs_by_vehicle = get_costs_by_vehicle()
+
+    if costs_by_vehicle:
+        df_costs = pd.DataFrame(
+            costs_by_vehicle,
+            columns=[
+                "Vehículo" if language == "es" else "Vehicle",
+                "Costo total" if language == "es" else "Total cost",
+            ],
+        )
+
+        fig = px.bar(
+            df_costs,
+            x="Vehículo" if language == "es" else "Vehicle",
+            y="Costo total" if language == "es" else "Total cost",
+            text="Costo total" if language == "es" else "Total cost",
+            title=(
+                "Gasto total por vehículo"
+                if language == "es"
+                else "Total expenses by vehicle"
+            ),
+        )
+
+        fig.update_layout(
+            xaxis_title=None,
+            yaxis_title=None,
+            showlegend=False,
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.info(
+            "Todavía no hay costos registrados."
+            if language == "es"
+            else "No costs registered yet."
         )

@@ -294,3 +294,21 @@ def get_oil_change_alerts():
         })
 
     return alerts
+
+def get_costs_by_vehicle():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT 
+            v.marca || ' ' || v.modelo AS vehiculo,
+            SUM(m.costo) AS costo_total
+        FROM mantenimientos m
+        INNER JOIN vehiculos v ON m.vehiculo_id = v.id
+        GROUP BY v.id
+        ORDER BY costo_total DESC
+    """)
+
+    results = cursor.fetchall()
+    conn.close()
+    return results
